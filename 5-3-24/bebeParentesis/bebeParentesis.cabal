@@ -28,7 +28,7 @@ library
       ArimeticExpression
       ExpresionEvaluator
       Lib
-      StringToExpression
+      StringToExpressionClass
   other-modules:
       Paths_bebeParentesis
   autogen-modules:
