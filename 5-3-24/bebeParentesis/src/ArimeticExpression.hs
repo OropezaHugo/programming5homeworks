@@ -3,7 +3,7 @@ module ArimeticExpression (Expression(..)) where
         Val Int 
         | Sum (Maybe Expression) (Maybe Expression) 
         | Sub (Maybe Expression) (Maybe Expression) 
-        | Mult (Maybe Expression) (Maybe Expression)
+        | Mul (Maybe Expression) (Maybe Expression)
         | Div (Maybe Expression) (Maybe Expression)
         | Pow (Maybe Expression) (Maybe Expression) deriving (Show)
 

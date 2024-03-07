@@ -19,7 +19,7 @@ module StringToExpressionClass(parser) where
     buildExpression text (x:xs)
         | x == '+' = Just (Sum (parser text) (parser xs))
         | x == '-' = Just (Sub (parser text) (parser xs))
-        | x == '*' = Just (Mult (parser text) (parser xs))
+        | x == '*' = Just (Mul (parser text) (parser xs))
         | x == '^' = Just (Pow (parser text) (parser xs))
         | x == '/' = Just (Div (parser text) (parser xs))
 
