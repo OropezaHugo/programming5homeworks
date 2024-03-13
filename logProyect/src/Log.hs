@@ -5,7 +5,8 @@ module Log
     MessageTree(..),
     testParse,
     testWhatWentWrong,
-    parseFileOfMessages) 
+    parseFileOfMessages,
+    whatWentWrong) 
     where
 
 
@@ -30,15 +31,9 @@ testParse :: (String -> [Maybe LogMessage])
 
 testParse parseFileOfMessages n file = take n . parseFileOfMessages <$> readFile file
 
-maybeToLog :: Maybe LogMessage -> LogMessage
-maybeToLog Nothing = Unknown (Just "no")
-maybeToLog (Just log) = log
-testWhatWentWrong :: (String -> [LogMessage])
-                -> ([LogMessage] -> [String])
-                -> FilePath
-                -> IO [String]
-testWhatWentWrong parse whatWentWrong file
-    = whatWentWrong . parse <$> readFile file
+testWhatWentWrong :: (String -> [Maybe LogMessage])
+                -> ([Maybe LogMessage] -> [String]) -> FilePath -> IO [String]
+testWhatWentWrong parseFileOfMessages whatWentWrong file = whatWentWrong . parseFileOfMessages <$> readFile file
 
 
 parseFileOfMessages :: String -> [Maybe LogMessage]
@@ -68,12 +63,12 @@ parseErrorMessages (Just string)
     = Just (LogMessage (Just (Error (read (returnUntilChar string ' ')))) (read (returnUntilChar (tail (dropUntilChar string ' ')) ' ')) (Just (tail (dropUntilChar (tail (dropUntilChar string ' ')) ' '))))
 
     
-whatWentWrong :: [Maybe LogMessage] -> [Maybe String]
+whatWentWrong :: [Maybe LogMessage] -> [String]
 whatWentWrong [] = []
 whatWentWrong ((Just (Unknown _)):xs) = whatWentWrong xs
 whatWentWrong ((Just (LogMessage (Just Warning) timestamp message)):xs) = whatWentWrong xs
 whatWentWrong ((Just (LogMessage (Just Info) timestamp message)):xs) = whatWentWrong xs
-whatWentWrong ((Just (LogMessage (Just (Error num)) timestamp message)):xs) 
+whatWentWrong ((Just (LogMessage (Just (Error num)) timestamp (Just message))):xs) 
     | num >= (Just 50) = message : whatWentWrong xs
     | otherwise = whatWentWrong xs
 
