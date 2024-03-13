@@ -11,28 +11,28 @@ module Log
 
 data MessageType = Info
                 | Warning
-                | Error Int
+                | Error (Maybe Int)
                 deriving (Show, Eq)
 
 type TimeStamp = Int
 
-data LogMessage = LogMessage MessageType TimeStamp String
-                | Unknown String
+data LogMessage = LogMessage (Maybe MessageType) (Maybe TimeStamp) (Maybe String)
+                | Unknown (Maybe String)
                 deriving (Show, Eq)
 
 data MessageTree = Leaf
-                | Node MessageTree LogMessage MessageTree
+                | Node (Maybe MessageTree) (Maybe LogMessage) (Maybe MessageTree)
                 deriving (Show, Eq)
 
 
-testParse :: (String -> [LogMessage])
-                -> Int
-                -> FilePath
-                -> IO [LogMessage] 
+testParse :: (String -> [Maybe LogMessage])
+                -> Int -> FilePath -> IO [Maybe LogMessage] 
 
-testParse parse n file = take n . parseFileOfMessages <$> readFile file
+testParse parseFileOfMessages n file = take n . parseFileOfMessages <$> readFile file
 
-
+maybeToLog :: Maybe LogMessage -> LogMessage
+maybeToLog Nothing = Unknown (Just "no")
+maybeToLog (Just log) = log
 testWhatWentWrong :: (String -> [LogMessage])
                 -> ([LogMessage] -> [String])
                 -> FilePath
@@ -41,37 +41,40 @@ testWhatWentWrong parse whatWentWrong file
     = whatWentWrong . parse <$> readFile file
 
 
-parseFileOfMessages :: String -> [LogMessage]
-parseFileOfMessages [] = [Unknown "unknown"]
-parseFileOfMessages string 
+parseFileOfMessages :: String -> [Maybe LogMessage]
+parseFileOfMessages [] = [Just (Unknown (Just "unknown"))]
+parseFileOfMessages string
     = parseMessage (returnUntilChar string '\n') : parseFileOfMessages (tail(dropUntilChar string '\n'))
 
-parseMessage :: String -> LogMessage
-parseMessage [] = Unknown "unknown"
+parseMessage :: String -> Maybe LogMessage
+parseMessage [] = Just (Unknown (Just "unknown"))
 parseMessage (x:xs)
-    | x == 'I' = parseInfoWarningMessages Info (tail xs)
-    | x == 'W' = parseInfoWarningMessages Warning (tail xs)
-    | x == 'E' = parseErrorMessages (tail xs)
-    | otherwise = Unknown "unknown"
+    | x == 'I' = parseInfoWarningMessages (Just Info) (Just(tail xs))
+    | x == 'W' = parseInfoWarningMessages (Just Warning) (Just(tail xs))
+    | x == 'E' = parseErrorMessages (Just(tail xs))
+    | otherwise = Just (Unknown (Just "unknown"))
 
-parseInfoWarningMessages :: MessageType -> String -> LogMessage
-parseInfoWarningMessages _ [] = Unknown "XD"
-parseInfoWarningMessages ty string 
-    = LogMessage ty (read (returnUntilChar string ' ')) (tail (dropUntilChar string ' '))
+parseInfoWarningMessages :: Maybe MessageType -> Maybe String -> Maybe LogMessage
+parseInfoWarningMessages _ Nothing = Just (Unknown (Just "XD"))
+parseInfoWarningMessages _ (Just []) = Just (Unknown (Just "XD"))
+parseInfoWarningMessages Nothing _ = Just (Unknown (Just "XD"))
+parseInfoWarningMessages (Just ty) (Just string )
+    = Just (LogMessage (Just ty) (Just (read (returnUntilChar string ' '))) (Just (tail (dropUntilChar string ' '))))
 
-parseErrorMessages :: String -> LogMessage
-parseErrorMessages [] = Unknown "XD"
-parseErrorMessages string 
-    = LogMessage (Error (read (returnUntilChar string ' '))) (read (returnUntilChar (tail (dropUntilChar string ' ')) ' ')) (tail (dropUntilChar (tail (dropUntilChar string ' ')) ' '))
+parseErrorMessages :: Maybe String -> Maybe LogMessage
+parseErrorMessages Nothing = Just (Unknown (Just "XD"))
+parseErrorMessages (Just []) = Just (Unknown (Just "XD"))
+parseErrorMessages (Just string) 
+    = Just (LogMessage (Just (Error (read (returnUntilChar string ' ')))) (read (returnUntilChar (tail (dropUntilChar string ' ')) ' ')) (Just (tail (dropUntilChar (tail (dropUntilChar string ' ')) ' '))))
 
     
-whatWentWrong :: [LogMessage] -> [String]
+whatWentWrong :: [Maybe LogMessage] -> [Maybe String]
 whatWentWrong [] = []
-whatWentWrong ((Unknown _):xs) = whatWentWrong xs
-whatWentWrong ((LogMessage Warning timestamp message):xs) = whatWentWrong xs
-whatWentWrong ((LogMessage Info timestamp message):xs) = whatWentWrong xs
-whatWentWrong (( LogMessage (Error num) timestamp message):xs) 
-    | num >= 50 = message : whatWentWrong xs
+whatWentWrong ((Just (Unknown _)):xs) = whatWentWrong xs
+whatWentWrong ((Just (LogMessage (Just Warning) timestamp message)):xs) = whatWentWrong xs
+whatWentWrong ((Just (LogMessage (Just Info) timestamp message)):xs) = whatWentWrong xs
+whatWentWrong ((Just (LogMessage (Just (Error num)) timestamp message)):xs) 
+    | num >= (Just 50) = message : whatWentWrong xs
     | otherwise = whatWentWrong xs
 
 

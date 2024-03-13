@@ -1,24 +1,28 @@
 module MessageTreeFunctions where
     import Log
 
-    insertLog :: LogMessage -> MessageTree -> MessageTree
-    insertLog log Leaf = Node Leaf log Leaf
-    insertLog (LogMessage ty times string) (Node leftNode (LogMessage tyroot timesroot stringroot) rightNode)
-        | timesroot <= times = Node leftNode (LogMessage tyroot timesroot stringroot) (insertLog (LogMessage ty times string) rightNode)
-        | timesroot > times = Node (insertLog (LogMessage ty times string) leftNode) (LogMessage tyroot timesroot stringroot) rightNode
+    insertLog :: Maybe LogMessage -> Maybe MessageTree -> Maybe MessageTree
+    insertLog (Just log) (Just Leaf) = Just (Node (Just Leaf) (Just log) (Just Leaf))
+    insertLog (Just (LogMessage ty times string))
+        (Just (Node leftNode (Just (LogMessage tyroot timesroot stringroot)) rightNode))
+        | timesroot <= times = Just (Node leftNode (Just (LogMessage tyroot timesroot stringroot)) (insertLog (Just (LogMessage ty times string)) rightNode))
+        | timesroot > times = Just (Node (insertLog (Just (LogMessage ty times string)) leftNode) (Just (LogMessage tyroot timesroot stringroot)) rightNode)
     
-    buildTree :: [LogMessage] -> MessageTree
-    buildTree [] = Leaf
-    buildTree (x:xs) = expandTree xs (insertLog x Leaf )
+    buildTree :: [Maybe LogMessage] -> Maybe MessageTree
+    buildTree [Nothing] = Just Leaf
+    buildTree [] = Just Leaf
+    buildTree (x:xs) = expandTree xs (insertLog x (Just Leaf) )
 
-    expandTree :: [LogMessage] -> MessageTree -> MessageTree
+    expandTree :: [Maybe LogMessage] -> Maybe MessageTree -> Maybe MessageTree
+    expandTree [Nothing] tree = tree
     expandTree [] tree = tree
     expandTree (x:xs) tree = expandTree xs (insertLog x tree )
 
-    inOrderTree :: MessageTree -> [LogMessage]
-    inOrderTree Leaf = [Unknown "noMessages"]
-    inOrderTree (Node leftSide root rightSide)
-        | leftSide /= Leaf = inOrderTree leftSide ++ [root] ++ inOrderTree rightSide
+    inOrderTree :: Maybe MessageTree -> [Maybe LogMessage]
+    inOrderTree Nothing = [Just (Unknown (Just "noMessages"))]
+    inOrderTree (Just Leaf) = [Just (Unknown (Just "noMessages"))]
+    inOrderTree (Just (Node leftSide root rightSide))
+        | leftSide /= (Just Leaf) = inOrderTree leftSide ++ [root] ++ inOrderTree rightSide
         | otherwise = [root]
 
 
