@@ -1,0 +1,13 @@
+my implementation includes a module which includes all the functions that I use,
+the logic was adjusted for 3x3 boards, all the game is centralized in the playTicTacToe function,
+which is a sequential function which recalls itself as long the game is still going on,
+it includes both cases for win and tie, also rejects wrong plays and the plays are sending coordinates
+of the position the player wants to use, starting (0 0) as the up-left corner,
+the principal challenge was the console UI implementations, for which I found approaches by using do/where/let, etc,
+but I decided to use the (>>, >>=) notation which allows me to group all in a function
+with the control of my variables and steps, and the classic guards for different plays cases,
+I decided to go with it because it was easier to read and using just 2 if-tenses it allows me to
+differ between sequences and decisions easily.
+
+about the tests and robustness it was proved for any input possibility such as negatives, out of bouns,
+any character invalid and was tested for every win case and obviously the tie case and end-game
